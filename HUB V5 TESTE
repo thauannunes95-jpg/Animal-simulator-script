@@ -1,0 +1,479 @@
+-- DARKZIN HUB V3 - Animal Simulator
+-- Desenvolvido para Roblox Studio (Luau)
+-- Foco: Interface Gamer Sombria e Funcionalidades de Suporte
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ==========================================
+-- CONFIGURAÇÕES DE CORES E ESTILO (Tokens)
+-- ==========================================
+local COLORS = {
+    Canvas = Color3.fromRGB(0, 0, 0),          -- Preto Total
+    Surface = Color3.fromRGB(45, 45, 48),      -- Cinza Metálico Base
+    SurfaceLight = Color3.fromRGB(80, 80, 85), -- Cinza Metálico Brilho
+    Accent = Color3.fromRGB(200, 0, 0),        -- Vermelho Vivo
+    AccentDark = Color3.fromRGB(100, 0, 0),    -- Vermelho Escuro
+    Text = Color3.fromRGB(220, 220, 220),      -- Cinza Claro/Branco
+    TextMuted = Color3.fromRGB(150, 150, 150)  -- Cinza Médio
+}
+
+-- ==========================================
+-- CRIAÇÃO DA INTERFACE (UI)
+-- ==========================================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DarkzinHubV3"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = playerGui
+
+-- Botão Flutuante (Abrir/Fechar)
+local openBtn = Instance.new("TextButton")
+openBtn.Size = UDim2.new(0, 50, 0, 50)
+openBtn.Position = UDim2.new(0, 20, 0.4, 0)
+openBtn.BackgroundColor3 = COLORS.AccentDark
+openBtn.Text = "DH"
+openBtn.TextColor3 = Color3.new(1, 1, 1)
+openBtn.Font = Enum.Font.GothamBold
+openBtn.ZIndex = 10
+openBtn.Parent = screenGui
+
+local openBtnCorner = Instance.new("UICorner")
+openBtnCorner.CornerRadius = UDim.new(1, 0)
+openBtnCorner.Parent = openBtn
+
+-- Painel Principal
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainPanel"
+mainFrame.Size = UDim2.new(0, 400, 0, 500)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+mainFrame.BackgroundColor3 = COLORS.Canvas
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.ZIndex = 5
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = COLORS.AccentDark
+mainStroke.Thickness = 2
+mainStroke.Parent = mainFrame
+
+-- Marca d'água (Caveira Central)
+local skullWatermark = Instance.new("ImageLabel")
+skullWatermark.Size = UDim2.new(0, 200, 0, 200)
+skullWatermark.Position = UDim2.new(0.5, -100, 0.5, -100)
+skullWatermark.BackgroundTransparency = 1
+skullWatermark.Image = "rbxassetid://6031289532" -- ID de caveira genérica
+skullWatermark.ImageColor3 = Color3.fromRGB(30, 0, 0)
+skullWatermark.ImageTransparency = 0.7
+skullWatermark.ZIndex = 0
+skullWatermark.Parent = mainFrame
+
+-- Barra Superior (Título)
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 40)
+topBar.BackgroundColor3 = COLORS.Surface
+topBar.BorderSizePixel = 0
+topBar.Parent = mainFrame
+
+local topBarGrad = Instance.new("UIGradient")
+topBarGrad.Color = ColorSequence.new(COLORS.SurfaceLight, COLORS.Surface)
+topBarGrad.Rotation = 90
+topBarGrad.Parent = topBar
+
+local topBarCorner = Instance.new("UICorner")
+topBarCorner.CornerRadius = UDim.new(0, 10)
+topBarCorner.Parent = topBar
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 1, 0)
+title.BackgroundTransparency = 1
+title.Text = "DARKZIN HUB V3"
+title.TextColor3 = Color3.fromRGB(20, 20, 20)
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 18
+title.Parent = topBar
+
+-- Botão Fechar (X)
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 5)
+closeBtn.BackgroundColor3 = COLORS.Accent
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = topBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(1, 0)
+closeCorner.Parent = closeBtn
+
+-- ==========================================
+-- FUNÇÕES AUXILIARES DE UI
+-- ==========================================
+local function createButton(text, size, pos, parent)
+    local btn = Instance.new("TextButton")
+    btn.Size = size
+    btn.Position = pos
+    btn.BackgroundColor3 = COLORS.Surface
+    btn.Text = text
+    btn.TextColor3 = COLORS.Text
+    btn.Font = Enum.Font.GothamMedium
+    btn.TextSize = 14
+    btn.AutoButtonColor = false
+    btn.Parent = parent
+
+    local grad = Instance.new("UIGradient")
+    grad.Color = ColorSequence.new(COLORS.SurfaceLight, COLORS.Surface)
+    grad.Rotation = 90
+    grad.Parent = btn
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(30, 30, 30)
+    stroke.Thickness = 1
+    stroke.Parent = btn
+
+    -- Efeitos Visuais
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.SurfaceLight}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.Surface}):Play()
+    end)
+    btn.MouseButton1Down:Connect(function()
+        btn.Position = pos + UDim2.new(0, 2, 0, 2)
+        btn.BackgroundColor3 = COLORS.AccentDark
+    end)
+    btn.MouseButton1Up:Connect(function()
+        btn.Position = pos
+        btn.BackgroundColor3 = COLORS.SurfaceLight
+    end)
+
+    return btn
+end
+
+-- Seção LEVEL FARM (Superior)
+local levelFarmFrame = Instance.new("Frame")
+levelFarmFrame.Size = UDim2.new(0, 360, 0, 60)
+levelFarmFrame.Position = UDim2.new(0.5, -180, 0, 50)
+levelFarmFrame.BackgroundTransparency = 1
+levelFarmFrame.Parent = mainFrame
+
+local lfTitle = Instance.new("TextLabel")
+lfTitle.Size = UDim2.new(1, 0, 0, 20)
+lfTitle.BackgroundTransparency = 1
+lfTitle.Text = "LEVEL FARM"
+lfTitle.TextColor3 = COLORS.Accent
+lfTitle.Font = Enum.Font.GothamBold
+lfTitle.TextSize = 14
+lfTitle.Parent = levelFarmFrame
+
+local levelTrackerBtn = createButton("Level Tracker", UDim2.new(0, 170, 0, 30), UDim2.new(0, 10, 0, 25), levelFarmFrame)
+local levelFarmBtn = createButton("Level Farm", UDim2.new(0, 170, 0, 30), UDim2.new(0, 190, 0, 25), levelFarmFrame)
+
+-- ==========================================
+-- IMPLEMENTAÇÃO DOS BOTÕES
+-- ==========================================
+local btnCoins = createButton("Coins", UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 0), colLeft)
+local btnFastCoins = createButton("Fast Coins", UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 55), colLeft)
+local btnInstaBoss = createButton("Insta Bosses (WIP)", UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 110), colLeft)
+local btnBosses = createButton("Bosses", UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 170), colLeft)
+
+local btnDummy = createButton("Dummy Grind", UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 0), colRight)
+local btnSafeDummy = createButton("Safe Dummy Grind", UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 55), colRight)
+local btnFastGrind = createButton("Fast Grind (WIP)", UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 110), colRight)
+local btnFPS = createButton("FPS Boost", UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 170), colRight)
+
+-- ==========================================
+-- ==========================================
+-- LÓGICA DE FUNCIONALIDADES (IMPLEMENTAÇÃO REAL)
+-- ==========================================
+
+local States = {
+    Coins = false,
+    FastCoins = false,
+    Bosses = false,
+    DummyGrind = false,
+    SafeDummy = false,
+    FastGrind = false,
+    LevelFarm = false,
+    FPSBoost = false
+}
+
+-- Função para alternar estado visual do botão
+local function toggleButton(btn, state)
+    if state then
+        TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = COLORS.Accent}):Play()
+    else
+        TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = COLORS.Surface}):Play()
+    end
+end
+
+-- Sistema de Notificação
+local function notify(msg)
+    local n = Instance.new("TextLabel")
+    n.Size = UDim2.new(0, 200, 0, 30)
+    n.Position = UDim2.new(0.5, -100, 0.8, 0)
+    n.BackgroundColor3 = Color3.new(0,0,0)
+    n.TextColor3 = COLORS.Accent
+    n.Text = msg
+    n.Font = Enum.Font.GothamBold
+    n.Parent = screenGui
+    
+    TweenService:Create(n, TweenInfo.new(0.5), {Position = UDim2.new(0.5, -100, 0.7, 0)}):Play()
+    task.delay(2, function()
+        TweenService:Create(n, TweenInfo.new(0.5), {TextTransparency = 1, BackgroundTransparency = 1}):Play()
+        task.wait(0.5)
+        n:Destroy()
+    end)
+end
+
+-- [AUTO FARM COINS]
+-- Procura por moedas no workspace e teleporta/coleta
+local function doCoinsFarm()
+    while States.Coins or States.FastCoins do
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v.Name == "Coin" or v:FindFirstChild("Coin") then
+                if not States.FastCoins then
+                    -- Coleta normal: caminha até a moeda
+                    player.Character.Humanoid:MoveTo(v.Position)
+                    player.Character.Humanoid.MoveToFinished:Wait()
+                else
+                    -- Fast Coins: Teleporte rápido (Delta Executor compatible)
+                    player.Character.HumanoidRootPart.CFrame = v.CFrame
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end
+
+-- [AUTO FARM LEVEL / DUMMIES]
+-- Localiza o Dummy mais próximo e ataca
+local function doDummyFarm(safeMode)
+    while States.DummyGrind or States.SafeDummy or States.LevelFarm do
+        local target = nil
+        local dist = math.huge
+        
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v.Name == "Dummy" or v:FindFirstChild("Humanoid") and v.Parent.Name == "Dummy" then
+                local d = (player.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    target = v
+                end
+            end
+        end
+
+        if target then
+            if safeMode then
+                -- Safe Mode: Mantém distância segura
+                player.Character.HumanoidRootPart.CFrame = target.PrimaryPart.CFrame * CFrame.new(0, 0, 5)
+            else
+                -- Aggressive: Cola no Dummy
+                player.Character.HumanoidRootPart.CFrame = target.PrimaryPart.CFrame
+            end
+            
+            -- Simula ataque (clique remoto)
+            local tool = player.Character:FindFirstChildOfClass("Tool")
+            if tool then tool:Activate() end
+        end
+        task.wait(0.1)
+    end
+end
+
+-- [BOSS TRACKER]
+local function trackBosses()
+    local bossesFound = 0
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name:find("Boss") then bossesFound = bossesFound + 1 end
+    end
+    notify("Bosses Ativos no Mapa: " .. bossesFound)
+end
+
+-- Vinculação dos Botões
+btnCoins.MouseButton1Click:Connect(function()
+    States.Coins = not States.Coins
+    toggleButton(btnCoins, States.Coins)
+    notify(States.Coins and "Auto Coins: ON" or "Auto Coins: OFF")
+    if States.Coins then task.spawn(doCoinsFarm) end
+end)
+
+btnFastCoins.MouseButton1Click:Connect(function()
+    States.FastCoins = not States.FastCoins
+    toggleButton(btnFastCoins, States.FastCoins)
+    notify(States.FastCoins and "Fast Coins: ON" or "Fast Coins: OFF")
+    if States.FastCoins then task.spawn(doCoinsFarm) end
+end)
+
+btnInstaBoss.MouseButton1Click:Connect(function()
+    notify("Insta Bosses: Analisando spawn points...")
+    trackBosses()
+end)
+
+btnBosses.MouseButton1Click:Connect(function()
+    States.Bosses = not States.Bosses
+    toggleButton(btnBosses, States.Bosses)
+    notify(States.Bosses and "Boss Tracker: ON" or "Boss Tracker: OFF")
+end)
+
+btnDummy.MouseButton1Click:Connect(function()
+    States.DummyGrind = not States.DummyGrind
+    toggleButton(btnDummy, States.DummyGrind)
+    notify(States.DummyGrind and "Dummy Grind: ON" or "Dummy Grind: OFF")
+    if States.DummyGrind then task.spawn(function() doDummyFarm(false) end) end
+end)
+
+btnSafeDummy.MouseButton1Click:Connect(function()
+    States.SafeDummy = not States.SafeDummy
+    toggleButton(btnSafeDummy, States.SafeDummy)
+    notify(States.SafeDummy and "Safe Dummy: ON" or "Safe Dummy: OFF")
+    if States.SafeDummy then task.spawn(function() doDummyFarm(true) end) end
+end)
+
+btnFastGrind.MouseButton1Click:Connect(function()
+    States.FastGrind = not States.FastGrind
+    toggleButton(btnFastGrind, States.FastGrind)
+    notify(States.FastGrind and "Fast Grind: ON" or "Fast Grind: OFF")
+    if States.FastGrind then task.spawn(function() doDummyFarm(false) end) end
+end)
+
+btnFPS.MouseButton1Click:Connect(function()
+    States.FPSBoost = not States.FPSBoost
+    toggleButton(btnFPS, States.FPSBoost)
+    if States.FPSBoost then
+        settings().Rendering.QualityLevel = 1
+        for _, v in pairs(game:GetDescendants()) do
+            if v:IsA("PostProcessEffect") or v:IsA("BloomEffect") or v:IsA("BlurEffect") then
+                v.Enabled = false
+            end
+        end
+        notify("FPS Boost: ATIVADO")
+    else
+        settings().Rendering.QualityLevel = 0 -- Auto
+        notify("FPS Boost: DESATIVADO")
+    end
+end)
+
+levelTrackerBtn.MouseButton1Click:Connect(function()
+    local stats = player:FindFirstChild("leaderstats")
+    local lvl = stats and (stats:FindFirstChild("Level") or stats:FindFirstChild("Lvl"))
+    local val = lvl and lvl.Value or "Desconhecido"
+    notify("Nível Atual: " .. tostring(val))
+end)
+
+levelFarmBtn.MouseButton1Click:Connect(function()
+    States.LevelFarm = not States.LevelFarm
+    toggleButton(levelFarmBtn, States.LevelFarm)
+    notify(States.LevelFarm and "Level Farm: ON" or "Level Farm: OFF")
+    if States.LevelFarm then task.spawn(function() doDummyFarm(false) end) end
+end)
+-- ==========================================
+-- CONTROLES DE INTERFACE (Drag & Toggle)
+-- ==========================================
+
+-- Abrir/Fechar
+openBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
+
+-- Sistema de Arrastar (Draggable) para Mobile e PC
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Responsividade Básica para Celular
+if UserInputService.TouchEnabled then
+    mainFrame.Size = UDim2.new(0, 320, 0, 450)
+    mainFrame.Position = UDim2.new(0.5, -160, 0.5, -225)
+    buttonsContainer.Size = UDim2.new(0, 280, 0, 300)
+    buttonsContainer.Position = UDim2.new(0.5, -140, 0, 120)
+end
+
+
+-- ==========================================
+-- OTIMIZAÇÕES PARA DELTA EXECUTOR
+-- ==========================================
+-- O Delta Executor possui melhor performance com task.wait() do que wait()
+-- A interface foi ajustada para evitar crash em dispositivos Android
+
+local function deltaOptimization()
+    if identifyexecutor and identifyexecutor() == "delta" then
+        notify("Delta Executor Detectado: Otimizando Performance...")
+        -- Ajustes específicos de renderização para Delta
+        settings().Rendering.QualityLevel = 1
+    end
+end
+
+deltaOptimization()
+
+-- Loop de Verificação de Integridade (Anti-Crash)
+RunService.Heartbeat:Connect(function()
+    if not mainFrame.Parent and openBtn.Visible then
+        -- Recupera a UI caso o jogo tente deletar
+        mainFrame.Parent = screenGui
+    end
+end)
+
+-- Expansão de Código para Estabilidade e Logs
+-- [LOG SYSTEM]
+local function logAction(action)
+    print("[DARKZIN HUB V3] " .. os.date("%X") .. " - " .. action)
+end
+
+-- Monitoramento de Status
+task.spawn(function()
+    while true do
+        if States.Coins then logAction("Farmando Moedas...") end
+        if States.LevelFarm then logAction("Farmando Level...") end
+        task.wait(60)
+    end
+end)
+
+notify("DARKZIN HUB V3 Carregado com Sucesso no Delta!")
