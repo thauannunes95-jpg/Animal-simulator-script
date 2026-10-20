@@ -1,0 +1,371 @@
+-- DARKZIN HUB V3 - Animal Simulator
+-- Otimizado para Delta Executor (Android)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ==========================================
+-- TOKENS DE DESIGN (Preto e Vermelho)
+-- ==========================================
+local THEME = {
+    Background = Color3.fromRGB(10, 10, 10),
+    Surface = Color3.fromRGB(30, 30, 30),
+    Accent = Color3.fromRGB(200, 0, 0),
+    AccentDark = Color3.fromRGB(120, 0, 0),
+    Text = Color3.fromRGB(255, 255, 255),
+    TextMuted = Color3.fromRGB(180, 180, 180)
+}
+
+-- ==========================================
+-- 1. CONSTRUÇÃO DA INTERFACE (Prioridade Máxima)
+-- ==========================================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DarkzinHubV3_UI"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+-- Botão Flutuante DH
+local openBtn = Instance.new("TextButton")
+openBtn.Name = "OpenButton"
+openBtn.Size = UDim2.new(0, 50, 0, 50)
+openBtn.Position = UDim2.new(0, 15, 0.4, 0)
+openBtn.BackgroundColor3 = THEME.AccentDark
+openBtn.Text = "DH"
+openBtn.TextColor3 = THEME.Text
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextSize = 18
+openBtn.ZIndex = 10
+openBtn.Parent = screenGui
+
+local openCorner = Instance.new("UICorner")
+openCorner.CornerRadius = UDim.new(1, 0)
+openCorner.Parent = openBtn
+
+-- Painel Principal
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainPanel"
+mainFrame.Size = UDim2.new(0, 350, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -175, 0.5, -200)
+mainFrame.BackgroundColor3 = THEME.Background
+mainFrame.Visible = false
+mainFrame.ZIndex = 5
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = THEME.Accent
+mainStroke.Thickness = 2
+mainStroke.Parent = mainFrame
+
+-- Barra de Título
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 40)
+topBar.BackgroundColor3 = THEME.Surface
+topBar.BorderSizePixel = 0
+topBar.ZIndex = 6
+topBar.Parent = mainFrame
+
+local topCorner = Instance.new("UICorner")
+topCorner.CornerRadius = UDim.new(0, 12)
+topCorner.Parent = topBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -40, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "DARKZIN HUB V3"
+titleLabel.TextColor3 = THEME.Text
+titleLabel.Font = Enum.Font.GothamBlack
+titleLabel.TextSize = 16
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.ZIndex = 7
+titleLabel.Parent = topBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 5)
+closeBtn.BackgroundColor3 = THEME.Accent
+closeBtn.Text = "X"
+closeBtn.TextColor3 = THEME.Text
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.ZIndex = 7
+closeBtn.Parent = topBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = closeBtn
+
+-- Container de Conteúdo (Scrolling)
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, -20, 1, -60)
+scroll.Position = UDim2.new(0, 10, 0, 50)
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+scroll.CanvasSize = UDim2.new(0, 0, 0, 500)
+scroll.ScrollBarThickness = 4
+scroll.ZIndex = 6
+scroll.Parent = mainFrame
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 10)
+listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+listLayout.Parent = scroll
+
+-- ==========================================
+-- COMPONENTES DE UI (Funções de Criação)
+-- ==========================================
+local function createSection(name)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 320, 0, 0)
+    frame.AutomaticSize = Enum.AutomaticSize.Y
+    frame.BackgroundColor3 = THEME.Surface
+    frame.ZIndex = 7
+    frame.Parent = scroll
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 30)
+    label.BackgroundTransparency = 1
+    label.Text = name:upper()
+    label.TextColor3 = THEME.Accent
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 14
+    label.ZIndex = 8
+    label.Parent = frame
+    
+    return frame
+end
+
+local function createToggle(text, parent)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 300, 0, 35)
+    btn.Position = UDim2.new(0, 10, 0, 0)
+    btn.BackgroundColor3 = THEME.Background
+    btn.Text = text .. ": OFF"
+    btn.TextColor3 = THEME.Text
+    btn.Font = Enum.Font.GothamMedium
+    btn.TextSize = 14
+    btn.ZIndex = 8
+    btn.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    
+    return btn
+end
+
+-- ==========================================
+-- 2. IMPLEMENTAÇÃO DAS OPÇÕES
+-- ==========================================
+
+-- [SEÇÃO: SPAWN MOEDAS]
+-- [SEÇÃO: SPAWN MOEDAS] (Organizada para evitar sobreposição)
+local spawnSec = createSection("Spawn Moedas")
+
+-- 1. Botão Principal de Spawn
+local btnSpawn = createToggle("Gerar Moedas", spawnSec)
+
+-- 2. Container de Intervalo (Ajustado para fluir no UIListLayout)
+local intervalFrame = Instance.new("Frame")
+    intervalFrame.Size = UDim2.new(0, 300, 0, 40)
+    intervalFrame.Position = UDim2.new(0, 10, 0, 0)
+    intervalFrame.BackgroundTransparency = 1
+    intervalFrame.ZIndex = 8
+    intervalFrame.Parent = spawnSec
+
+local msInput = Instance.new("TextBox")
+    msInput.Size = UDim2.new(0, 100, 0, 30)
+    msInput.Position = UDim2.new(0, 0, 0, 0)
+    msInput.BackgroundColor3 = THEME.Background
+    msInput.TextColor3 = THEME.Text
+    msInput.Text = "100"
+    msInput.Font = Enum.Font.Gotham
+    msInput.TextSize = 14
+    msInput.ZIndex = 9
+    msInput.Parent = intervalFrame
+
+local btnPlus = Instance.new("TextButton")
+    btnPlus.Size = UDim2.new(0, 40, 0, 30)
+    btnPlus.Position = UDim2.new(0, 110, 0, 0)
+    btnPlus.BackgroundColor3 = THEME.AccentDark
+    btnPlus.Text = "+"
+    btnPlus.TextColor3 = THEME.Text
+    btnPlus.ZIndex = 9
+    btnPlus.Parent = intervalFrame
+
+local btnMinus = Instance.new("TextButton")
+    btnMinus.Size = UDim2.new(0, 40, 0, 30)
+    btnMinus.Position = UDim2.new(0, 155, 0, 0)
+    btnMinus.BackgroundColor3 = THEME.AccentDark
+    btnMinus.Text = "-"
+    btnMinus.TextColor3 = THEME.Text
+    btnMinus.ZIndex = 9
+    btnMinus.Parent = intervalFrame
+
+-- 3. Botão Hide Moedas
+local btnHide = createToggle("Hide Moedas", spawnSec)
+-- [SEÇÃO: ANT OFF]
+local antSec = createSection("Anti-Inatividade")
+local btnAntOff = createToggle("Ant OFF", antSec)
+
+-- [SEÇÃO: INSTA KILL]
+local bossSec = createSection("Bosses")
+local btnInstaKill = createToggle("Insta Kill", bossSec)
+
+-- ==========================================
+-- 3. LÓGICA FUNCIONAL (Segura)
+-- ==========================================
+local States = {
+    Spawn = false,
+    Hide = false,
+    AntOff = false,
+    InstaKill = false,
+    Interval = 100
+}
+
+local function notify(msg)
+    local n = Instance.new("TextLabel")
+    n.Size = UDim2.new(0, 200, 0, 30)
+    n.Position = UDim2.new(0.5, -100, 0.8, 0)
+    n.BackgroundColor3 = Color3.new(0,0,0)
+    n.TextColor3 = THEME.Accent
+    n.Text = msg
+    n.Font = Enum.Font.GothamBold
+    n.Parent = screenGui
+    task.delay(2, function() n:Destroy() end)
+end
+
+-- Lógica Spawn Moedas (Via Remote)
+btnSpawn.MouseButton1Click:Connect(function()
+    States.Spawn = not States.Spawn
+    btnSpawn.Text = "Gerar Moedas: " .. (States.Spawn and "ON" or "OFF")
+    btnSpawn.BackgroundColor3 = States.Spawn and THEME.Accent or THEME.Background
+    
+    if States.Spawn then
+        task.spawn(function()
+            while States.Spawn do
+                -- Tenta disparar evento de coleta/geração se existir
+                local remote = game:GetService("ReplicatedStorage"):FindFirstChild("CollectCoin", true) or 
+                               game:GetService("ReplicatedStorage"):FindFirstChild("CoinEvent", true)
+                if remote and remote:IsA("RemoteEvent") then
+                    remote:FireServer()
+                end
+                task.wait(States.Interval / 1000)
+            end
+        end)
+    end
+end)
+
+btnPlus.MouseButton1Click:Connect(function()
+    States.Interval = States.Interval + 50
+    msInput.Text = tostring(States.Interval)
+end)
+
+btnMinus.MouseButton1Click:Connect(function()
+    States.Interval = math.max(10, States.Interval - 50)
+    msInput.Text = tostring(States.Interval)
+end)
+
+btnHide.MouseButton1Click:Connect(function()
+    States.Hide = not States.Hide
+    btnHide.Text = "Hide Moedas: " .. (States.Hide and "ON" or "OFF")
+    btnHide.BackgroundColor3 = States.Hide and THEME.Accent or THEME.Background
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "Coin" and v:IsA("BasePart") then
+            v.LocalTransparencyModifier = States.Hide and 1 or 0
+        end
+    end
+end)
+
+-- Lógica Ant OFF
+btnAntOff.MouseButton1Click:Connect(function()
+    States.AntOff = not States.AntOff
+    btnAntOff.Text = "Ant OFF: " .. (States.AntOff and "ON" or "OFF")
+    btnAntOff.BackgroundColor3 = States.AntOff and THEME.Accent or THEME.Background
+    
+    if States.AntOff then
+        task.spawn(function()
+            local VirtualUser = game:GetService("VirtualUser")
+            while States.AntOff do
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new(0,0))
+                task.wait(30)
+            end
+        end)
+    end
+end)
+
+-- Lógica Insta Kill (Ataque Rápido)
+btnInstaKill.MouseButton1Click:Connect(function()
+    States.InstaKill = not States.InstaKill
+    btnInstaKill.Text = "Insta Kill: " .. (States.InstaKill and "ON" or "OFF")
+    btnInstaKill.BackgroundColor3 = States.InstaKill and THEME.Accent or THEME.Background
+    
+    if States.InstaKill then
+        task.spawn(function()
+            while States.InstaKill do
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Model") and v.Name:find("Boss") then
+                            local bRoot = v:FindFirstChild("HumanoidRootPart") or v.PrimaryPart
+                            if bRoot then
+                                char.HumanoidRootPart.CFrame = bRoot.CFrame * CFrame.new(0, 0, 2)
+                                local tool = char:FindFirstChildOfClass("Tool")
+                                if tool then tool:Activate() end
+                            end
+                        end
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+end)
+
+-- ==========================================
+-- 4. CONTROLES DE JANELA E MOBILE
+-- ==========================================
+openBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
+
+-- Arrastar Painel (Touch/Mouse)
+local dragging, dragInput, dragStart, startPos
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+notify("DARKZIN HUB V3 Carregado!")
